@@ -1,0 +1,86 @@
+        -:    0:Source:Graph.cpp
+        -:    0:Graph:Graph.gcno
+        -:    0:Data:Graph.gcda
+        -:    0:Runs:7
+        -:    1:#include "Graph.hpp"
+        -:    2:#include <stack>
+        -:    3:#include <stdexcept>
+        -:    4:
+        -:    5:
+        5:    6:Graph::Graph(unsigned int nVertices, unsigned int nEdges, int seed) : Graph(nVertices) { // Random graph
+        5:    7:    if (nEdges > (nVertices*nVertices - nVertices)/2)
+        1:    8:        throw std::invalid_argument("Too many edges");
+        4:    9:    srand(seed);
+        -:   10:
+        4:   11:    std::vector<Edge> edges;
+        4:   12:    edges.reserve((nVertices*nVertices - nVertices)/2);
+     1299:   13:    for (unsigned int i = 0; i < nVertices-1; i++) {
+   515546:   14:        for (unsigned int j = i+1; j < nVertices; j++) {
+   514251:   15:            edges.push_back({i,j});
+        -:   16:        }
+        -:   17:    }
+        -:   18:
+   505004:   19:    while (edges.size() > nEdges) {
+   505000:   20:        unsigned int randomIndex = rand() % edges.size();
+   505000:   21:        std::swap(edges[randomIndex], edges.back()); // Swapping so we can use pop_back instead of erasing the mid
+   505000:   22:        edges.pop_back();
+        -:   23:    }
+        -:   24:
+     9255:   25:    for (const auto& edge : edges)
+     9251:   26:        addEdge(edge);
+        5:   27:}
+        -:   28:
+        -:   29:
+     9251:   30:void Graph::addEdge(unsigned int u, unsigned int v) {
+    9251*:   31:    if (u == v) throw std::logic_error("Simple graphs don't have an edge from a vertex to itself.");
+     9251:   32:    adjMatrix.at(u).at(v) = adjMatrix.at(v).at(u) = true;
+     9251:   33:}
+        -:   34:
+        -:   35:
+        4:   36:std::vector<Edge> Graph::getEulerianCircle() const {
+        4:   37:    std::vector<unsigned int> degree(numVertices, 0);
+      107:   38:    for (unsigned int i = 0; i < numVertices; i++) {
+    11507:   39:        for (unsigned int j = 0; j < numVertices; j++)
+    11401:   40:            degree[i] += adjMatrix[i][j];
+        -:   41:
+      106:   42:        if (degree[i] % 2 == 1) return {}; // No Eulerian circle exists if any vertex has odd degree
+        -:   43:    }
+        -:   44:
+        1:   45:    unsigned int startVertex = numVertices;
+       1*:   46:    for (unsigned int i = 0; i < numVertices; i++) {
+        1:   47:        if (degree[i] > 0) {
+        1:   48:            startVertex = i;
+        1:   49:            break;
+        -:   50:        }
+        -:   51:    }
+       1*:   52:    if (startVertex == numVertices) return {}; // No edges in the graph
+        -:   53:
+        1:   54:    std::vector<Edge> eulerianCircle;
+        1:   55:    std::stack<unsigned int> stack;
+        1:   56:    std::vector<std::vector<bool>> adjMatrixCopy = adjMatrix;
+        -:   57:
+        1:   58:    stack.push(startVertex);
+     9704:   59:    while (!stack.empty()) {
+     9703:   60:        unsigned int u = stack.top();
+     9703:   61:        bool foundEdge = false;
+        -:   62:
+   727750:   63:        for (unsigned int v = 0; v < numVertices; v++) { // Find an edge from u
+   722898:   64:            if (adjMatrixCopy[u][v]) {
+     4851:   65:                adjMatrixCopy[u][v] = adjMatrixCopy[v][u] = false;
+     4851:   66:                stack.push(v);
+     4851:   67:                foundEdge = true;
+     4851:   68:                break;
+        -:   69:            }
+        -:   70:        }
+        -:   71:
+     9703:   72:        if (!foundEdge) { // We finished all the edges from u, add it to the path
+     4852:   73:            stack.pop();
+     4852:   74:            if (!stack.empty()) {
+     4851:   75:                unsigned int v = stack.top();
+     4851:   76:                eulerianCircle.push_back({u, v});
+        -:   77:            }
+        -:   78:        }
+        -:   79:    }
+        -:   80:
+        1:   81:    return eulerianCircle;
+        4:   82:}

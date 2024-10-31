@@ -1,0 +1,47 @@
+        -:    0:Source:MoleculeFactory.cpp
+        -:    0:Graph:./AtomStorageServer.gcno
+        -:    0:Data:./AtomStorageServer.gcda
+        -:    0:Runs:6
+        -:    1:#ifndef MOLECULEFACTORY_CPP
+        -:    2:#define MOLECULEFACTORY_CPP
+        -:    3:#include "Molecule.cpp"
+        -:    4:
+        -:    5:class MoleculeFactory {
+        -:    6:
+        -:    7:    static const Molecule WATER;
+        -:    8:    static const Molecule CARBON_DIOXIDE;
+        -:    9:    static const Molecule ALCOHOL;
+        -:   10:    static const Molecule GLUCOSE;
+        -:   11:
+        -:   12:    static const char* SOFT_DRINK[];
+        -:   13:    static const char* VODKA[];
+        -:   14:    static const char* CHAMPAGNE[];
+        -:   15:
+        -:   16:public:
+       27:   17:    static Molecule getMolecule(const char* type) {
+       27:   18:        if (strcmp(type, "WATER") == 0) return WATER;
+       19:   19:        if (strcmp(type, "CARBON_DIOXIDE") == 0) return CARBON_DIOXIDE;
+       14:   20:        if (strcmp(type, "ALCOHOL") == 0) return ALCOHOL;
+        9:   21:        if (strcmp(type, "GLUCOSE") == 0) return GLUCOSE;
+        3:   22:        throw std::invalid_argument("Unknown molecule type");
+        -:   23:    }
+        -:   24:
+       10:   25:    static const char** getDrink(const char* type) {
+       10:   26:        if (strcmp(type, "SOFT_DRINK") == 0) return SOFT_DRINK;
+        8:   27:        if (strcmp(type, "VODKA") == 0) return VODKA;
+        6:   28:        if (strcmp(type, "CHAMPAGNE") == 0) return CHAMPAGNE;
+        4:   29:        throw std::invalid_argument("Unknown drink type");
+        -:   30:    }
+        -:   31:
+        -:   32:};
+        -:   33:
+        -:   34:const Molecule MoleculeFactory::WATER = 2_H + 1_O;
+        -:   35:const Molecule MoleculeFactory::CARBON_DIOXIDE = 1_C + 2_O;
+        -:   36:const Molecule MoleculeFactory::ALCOHOL = 1_C + 1_O + 2_H;
+        -:   37:const Molecule MoleculeFactory::GLUCOSE = 6_C + 6_O + 12_H;
+        -:   38:
+        -:   39:const char* MoleculeFactory::SOFT_DRINK[] = {"WATER", "CARBON_DIOXIDE", "GLUCOSE"};
+        -:   40:const char* MoleculeFactory::VODKA[] = {"WATER", "ALCOHOL", "GLUCOSE"};
+        -:   41:const char* MoleculeFactory::CHAMPAGNE[] = {"WATER", "CARBON_DIOXIDE", "ALCOHOL"};
+        -:   42:
+        -:   43:#endif

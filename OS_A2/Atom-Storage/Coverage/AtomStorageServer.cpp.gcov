@@ -1,0 +1,313 @@
+        -:    0:Source:AtomStorageServer.cpp
+        -:    0:Graph:./AtomStorageServer.gcno
+        -:    0:Data:./AtomStorageServer.gcda
+        -:    0:Runs:6
+        -:    1:#include <stdio.h>
+        -:    2:#include <stdlib.h>
+        -:    3:#include <string.h>
+        -:    4:#include <unistd.h>
+        -:    5:#include <sys/socket.h>
+        -:    6:#include <netdb.h>
+        -:    7:#include <sys/select.h>
+        -:    8:#include "MoleculeFactory.cpp"
+        -:    9:
+        -:   10:#pragma clang diagnostic push
+        -:   11:#pragma ide diagnostic ignored "UnreachableCode"
+        -:   12:#define PORT "55555"
+        -:   13:#define BACKLOG 10
+        -:   14:#define BUFFER_SIZE 100
+        -:   15:
+        -:   16:Molecule atoms;
+        -:   17:
+        1:   18:void perror_and_exit(const char* msg) {
+        1:   19:    perror(msg);
+        1:   20:    exit(1);
+        -:   21:}
+        -:   22:
+        8:   23:void process_add_command(int client_fd, char* atom_type, unsigned long long num_atoms) {
+        8:   24:    if (strcmp(atom_type, "CARBON") == 0) {
+        3:   25:        atoms.addCarbon(num_atoms);
+        5:   26:    } else if (strcmp(atom_type, "OXYGEN") == 0) {
+        1:   27:        atoms.addOxygen(num_atoms);
+        4:   28:    } else if (strcmp(atom_type, "HYDROGEN") == 0) {
+        1:   29:        atoms.addHydrogen(num_atoms);
+        -:   30:    }
+        8:   31:    send(client_fd, "OK\n", 3, 0);
+        8:   32:}
+        -:   33:
+        9:   34:void process_deliver_command(int udp_fd, struct sockaddr_storage* client_addr, socklen_t addr_len, char* molecule_name, unsigned long long num_molecules) {
+        9:   35:    Molecule molecule;
+        -:   36:    try {
+        9:   37:        molecule = MoleculeFactory::getMolecule(molecule_name) * num_molecules;
+        3:   38:    } catch (const std::exception& e) {
+        3:   39:        char response[] = "ERROR: Invalid molecule name\n";
+        3:   40:        sendto(udp_fd, response, sizeof(response), 0, (struct sockaddr*)client_addr, addr_len);
+        3:   41:        return;
+        3:   42:    }
+        -:   43:    char response[BUFFER_SIZE];
+        -:   44:
+        6:   45:    if (molecule <= atoms) {
+        5:   46:        atoms -= molecule;
+        5:   47:        strcpy(response, "OK\n");
+        -:   48:    } else {
+        1:   49:        strcpy(response, "ERROR: Insufficient atoms\n");
+        -:   50:    }
+        -:   51:
+        -:   52:    // Send response back to the UDP client
+        6:   53:    sendto(udp_fd, response, strlen(response), 0, (struct sockaddr*)client_addr, addr_len);
+        -:   54:}
+        -:   55:
+       10:   56:void process_gen_command(char* drink_name) {
+       10:   57:    char* response = new char[301];
+       10:   58:    response[0] = '\0';
+       10:   59:    const char** drink = MoleculeFactory::getDrink(drink_name);
+       24:   60:    for (unsigned int i = 0; i < 3; i++) {
+       18:   61:        unsigned long long n = atoms / MoleculeFactory::getMolecule(drink[i]);
+        -:   62:        char buffer[100];
+       18:   63:        sprintf(buffer, "Can generate %llu of %s\n", n, drink[i]);
+       18:   64:        strcat(response, buffer);
+        -:   65:    }
+        6:   66:    fprintf(stdin, "%s\n", response);
+        6:   67:    fprintf(stdout, "%s\n", response);
+        6:   68:}
+        -:   69:
+        9:   70:void process_command_tcp(int client_fd, char* buffer) {
+        9:   71:    printf("Processing command (TCP): %s\n", buffer);
+        -:   72:    char copy[BUFFER_SIZE];
+        9:   73:    strcpy(copy, buffer);
+        9:   74:    char* command = strtok(buffer, " ");
+        -:   75:
+        9:   76:    if (strcmp(command, "ADD") == 0) {
+        -:   77:        char atom_type[10];
+        -:   78:        unsigned long long num_atoms;
+        9:   79:        if (sscanf(copy, "ADD %s %llu", atom_type, &num_atoms) == 2) {
+        8:   80:            process_add_command(client_fd, atom_type, num_atoms);
+        -:   81:        } else {
+        1:   82:            send(client_fd, "ERROR: Invalid ADD command format\n", 34, 0);
+        -:   83:        }
+        -:   84:    } else {
+    #####:   85:        send(client_fd, "ERROR: Invalid command\n", 23, 0);
+        -:   86:    }
+        9:   87:    printf("Storage:\n%s\n", atoms.toString());
+        9:   88:}
+        -:   89:
+        9:   90:void process_command_udp(int udp_fd, struct sockaddr_storage* client_addr, socklen_t addr_len, char* buffer) {
+        9:   91:    printf("Processing command (UDP): %s\n", buffer);
+        -:   92:    char copy[BUFFER_SIZE];
+        9:   93:    strcpy(copy, buffer);
+        9:   94:    char* command = strtok(buffer, " ");
+        -:   95:
+        9:   96:    if (strcmp(command, "DELIVER") == 0) {
+        -:   97:        char molecule_name[16];
+        -:   98:        unsigned long long num_molecules;
+        9:   99:        if (sscanf(copy, "DELIVER %s %llu", molecule_name, &num_molecules) == 2) {
+        9:  100:            process_deliver_command(udp_fd, client_addr, addr_len, molecule_name, num_molecules);
+        -:  101:        } else {
+    #####:  102:            char response[] = "ERROR: Invalid DELIVER command format\n";
+    #####:  103:            sendto(udp_fd, response, sizeof(response), 0, (struct sockaddr*)client_addr, addr_len);
+        -:  104:        }
+        -:  105:    } else {
+    #####:  106:        char response[] = "ERROR: Invalid command\n";
+    #####:  107:        sendto(udp_fd, response, sizeof(response), 0, (struct sockaddr*)client_addr, addr_len);
+        -:  108:    }
+        9:  109:    printf("Storage:\n%s\n", atoms.toString());
+        9:  110:}
+        -:  111:
+       14:  112:void process_command_stdin(char* buffer) {
+       14:  113:    if (strcmp(buffer,"GEN SOFT DRINK") == 0) {
+        2:  114:        buffer[8] = '_';
+        -:  115:    }
+        -:  116:
+       14:  117:    char* command = strtok(buffer, " ");
+       14:  118:    char* drink_type = strtok(NULL, " ");
+        -:  119:
+       14:  120:    if (strcmp(command, "GEN") == 0 && drink_type != NULL) {
+        -:  121:        try {
+       10:  122:            process_gen_command(drink_type);
+        4:  123:        } catch (const std::exception& e) {
+        4:  124:            printf("ERROR: Unkown drink type\n");
+        4:  125:        }
+       10:  126:    } else {
+        4:  127:        printf("ERROR: Invalid GEN command\n");
+        -:  128:    }
+       14:  129:}
+        -:  130:
+        6:  131:int main(int argc, char* argv[]) {
+        -:  132:
+        6:  133:    unsigned int TIMEOUT_SECONDS = 20;
+        -:  134:    int option;
+       21:  135:    while ((option = getopt(argc, argv, "c:o:h:t:")) != -1) {
+       16:  136:        switch (option) {
+        5:  137:            case 'c':
+        5:  138:                atoms.addCarbon(strtoull(optarg, NULL, 10));
+        5:  139:                break;
+        3:  140:            case 'o':
+        3:  141:                atoms.addOxygen(strtoull(optarg, NULL, 10));
+        3:  142:                break;
+        3:  143:            case 'h':
+        3:  144:                atoms.addHydrogen(strtoull(optarg, NULL, 10));
+        3:  145:                break;
+        4:  146:            case 't':
+        4:  147:                TIMEOUT_SECONDS = atoi(optarg);
+        4:  148:                break;
+        1:  149:            default:
+        1:  150:                fprintf(stderr, "Usage: %s [-c carbon] [-o oxygen] [-h hydrogen] [-t timeout]\n", argv[0]);
+        1:  151:                exit(1);
+        -:  152:        }
+        -:  153:    }
+        -:  154:
+        -:  155:    int status, listener_fd, udp_fd, new_fd;
+        -:  156:    struct addrinfo hints_tcp, hints_udp, *res_tcp, *res_udp;
+        -:  157:    fd_set master, read_fds;
+        -:  158:    int fd_max;
+        -:  159:    struct timeval timeout;
+        -:  160:    int activity_detected;
+        5:  161:    int yes = 1;
+        -:  162:
+       85:  163:    FD_ZERO(&master);
+       85:  164:    FD_ZERO(&read_fds);
+        -:  165:
+        -:  166:    // TCP setup
+        5:  167:    memset(&hints_tcp, 0, sizeof hints_tcp);
+        5:  168:    hints_tcp.ai_family = AF_INET;  // IPv4
+        5:  169:    hints_tcp.ai_socktype = SOCK_STREAM;
+        5:  170:    hints_tcp.ai_flags = AI_PASSIVE;  // fill in my IP for me
+        -:  171:
+        5:  172:    if ((status = getaddrinfo(NULL, PORT, &hints_tcp, &res_tcp)) != 0) {
+    #####:  173:        fprintf(stderr, "getaddrinfo error (TCP): %s\n", gai_strerror(status));
+    #####:  174:        exit(1);
+        -:  175:    }
+        -:  176:
+        5:  177:    listener_fd = socket(res_tcp->ai_family, res_tcp->ai_socktype, res_tcp->ai_protocol); // TCP socket
+        5:  178:    if (listener_fd == -1)
+    #####:  179:        perror_and_exit("Creating TCP socket failed");
+        -:  180:
+        5:  181:    if (setsockopt(listener_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof yes) == -1)
+    #####:  182:        perror("setsockopt");
+        -:  183:
+        5:  184:    if (bind(listener_fd, res_tcp->ai_addr, res_tcp->ai_addrlen) == -1)
+        1:  185:        perror_and_exit("Binding TCP socket failed");
+        -:  186:
+        4:  187:    if (listen(listener_fd, BACKLOG) == -1)
+    #####:  188:        perror_and_exit("Listening on TCP socket failed");
+        -:  189:
+        4:  190:    FD_SET(listener_fd, &master);
+        4:  191:    fd_max = listener_fd;
+        -:  192:
+        -:  193:    // UDP setup
+        4:  194:    memset(&hints_udp, 0, sizeof hints_udp);
+        4:  195:    hints_udp.ai_family = AF_INET;  // IPv4
+        4:  196:    hints_udp.ai_socktype = SOCK_DGRAM;  // UDP
+        4:  197:    hints_udp.ai_flags = AI_PASSIVE;
+        -:  198:
+        4:  199:    if ((status = getaddrinfo(NULL, PORT, &hints_udp, &res_udp)) != 0) {
+    #####:  200:        fprintf(stderr, "getaddrinfo error (UDP): %s\n", gai_strerror(status));
+    #####:  201:        exit(1);
+        -:  202:    }
+        -:  203:
+        4:  204:    udp_fd = socket(res_udp->ai_family, res_udp->ai_socktype, res_udp->ai_protocol); // UDP socket
+        4:  205:    if (udp_fd == -1)
+    #####:  206:        perror_and_exit("Creating UDP socket failed");
+        -:  207:
+        4:  208:    if (bind(udp_fd, res_udp->ai_addr, res_udp->ai_addrlen) == -1)
+    #####:  209:        perror_and_exit("Binding UDP socket failed");
+        -:  210:
+        4:  211:    FD_SET(udp_fd, &master);
+        4:  212:    if (udp_fd > fd_max) {
+        4:  213:        fd_max = udp_fd;
+        -:  214:    }
+        -:  215:
+        -:  216:    // Listen to STDIN
+        4:  217:    FD_SET(STDIN_FILENO, &master);
+        4:  218:    if (STDIN_FILENO > fd_max) {
+    #####:  219:        fd_max = STDIN_FILENO;
+        -:  220:    }
+        -:  221:
+        4:  222:    printf("Server waiting for clients and keyboard...\n");
+        4:  223:    bool finished = false;
+        -:  224:
+        -:  225:    for (;;) {
+       40:  226:        read_fds = master; // Copy the master set because select ruins it
+        -:  227:
+       40:  228:        timeout.tv_sec = TIMEOUT_SECONDS;
+       40:  229:        timeout.tv_usec = 0;
+        -:  230:
+       40:  231:        activity_detected = select(fd_max + 1, &read_fds, NULL, NULL, &timeout);
+        -:  232:
+       40:  233:        if (activity_detected == -1) {
+    #####:  234:            perror_and_exit("select");
+       40:  235:        } else if (activity_detected == 0) { // Timeout occurred
+        4:  236:            printf("No activity for %d seconds, shutting down server.\n", TIMEOUT_SECONDS);
+        4:  237:            break;
+        -:  238:        }
+        -:  239:
+      242:  240:        for (int i = 0; i <= fd_max; i++) {
+      206:  241:            if (FD_ISSET(i, &read_fds)) {
+       36:  242:                if (i == listener_fd) {  // New TCP connection
+        -:  243:                    // Existing code to handle TCP connections
+        -:  244:                    struct sockaddr_storage client_addr;
+        2:  245:                    socklen_t addr_size = sizeof client_addr;
+        2:  246:                    new_fd = accept(listener_fd, (struct sockaddr*)&client_addr, &addr_size);
+        2:  247:                    if (new_fd == -1) {
+    #####:  248:                        perror("Accept failed");
+        -:  249:                    } else {
+        2:  250:                        FD_SET(new_fd, &master);  // Add new client to master set
+        2:  251:                        if (new_fd > fd_max) {
+        1:  252:                            fd_max = new_fd;
+        -:  253:                        }
+        2:  254:                        printf("New TCP connection\n");
+        -:  255:                    }
+       34:  256:                } else if (i == udp_fd) {  // Handle UDP data
+        -:  257:                    // Existing code to handle UDP data
+        -:  258:                    char buffer[BUFFER_SIZE];
+        -:  259:                    struct sockaddr_storage client_addr;
+        9:  260:                    socklen_t addr_len = sizeof client_addr;
+        9:  261:                    ssize_t bytes_received = recvfrom(udp_fd, buffer, sizeof buffer, 0, (struct sockaddr*)&client_addr, &addr_len);
+        9:  262:                    if (bytes_received > 0) {
+        9:  263:                        buffer[bytes_received] = '\0';
+        9:  264:                        process_command_udp(udp_fd, &client_addr, addr_len, buffer);
+        -:  265:                    } else {
+    #####:  266:                        perror("recvfrom");
+        -:  267:                    }
+       25:  268:                } else if (i == STDIN_FILENO) {  // Handle STDIN
+        -:  269:                    char buffer[BUFFER_SIZE];
+       14:  270:                    if (fgets(buffer, sizeof(buffer), stdin) != NULL) {
+       14:  271:                        size_t len = strlen(buffer);
+      14*:  272:                        if (len <= 1) continue;
+       14:  273:                        if (buffer[len - 1] == '\n') buffer[len - 1] = '\0';
+       14:  274:                        process_command_stdin(buffer);
+        -:  275:                    }
+        -:  276:                    else {
+    #####:  277:                        printf("Processing command (STDIN): %s of length: %zu", buffer, strlen(buffer));
+        -:  278:                    }
+        -:  279:                } else {  // Handle TCP data from a client
+        -:  280:                    // Existing code to handle TCP data
+        -:  281:                    char buffer[BUFFER_SIZE];
+       11:  282:                    ssize_t bytes_received = recv(i, buffer, sizeof buffer, 0);
+       11:  283:                    if (bytes_received <= 0) {
+        2:  284:                        if (bytes_received == 0) {
+        2:  285:                            printf("TCP client disconnected\n");
+        -:  286:                        } else {
+    #####:  287:                            perror("recv");
+        -:  288:                        }
+        2:  289:                        close(i);  // Close the socket
+        2:  290:                        FD_CLR(i, &master);  // Remove from master set
+        -:  291:                    } else {
+        9:  292:                        buffer[bytes_received] = '\0';
+        9:  293:                        process_command_tcp(i, buffer);
+        -:  294:                    }
+        -:  295:                }
+        -:  296:            }
+        -:  297:        }
+      36*:  298:        if (finished) break;
+        -:  299:
+       36:  300:    }
+        -:  301:
+        -:  302:    // Close all open sockets and free resources
+       25:  303:    for (int i = 0; i <= fd_max; i++) {
+       21:  304:        if (FD_ISSET(i, &master)) close(i);
+        -:  305:    }
+        4:  306:    freeaddrinfo(res_tcp);
+        4:  307:    freeaddrinfo(res_udp);
+        4:  308:    return 0;
+        -:  309:}

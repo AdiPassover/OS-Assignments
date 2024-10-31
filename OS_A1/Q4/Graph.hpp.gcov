@@ -1,0 +1,30 @@
+        -:    0:Source:Graph.hpp
+        -:    0:Graph:Main.gcno
+        -:    0:Data:Main.gcda
+        -:    0:Runs:9
+        -:    1:#include <vector>
+        -:    2:#include <iostream>
+        -:    3:#include <fstream>
+        -:    4:#include <string>
+        -:    5:#include <memory>
+        -:    6:#include <limits.h>
+        -:    7:
+        -:    8:using std::vector;
+        -:    9:using std::string;
+        -:   10:
+        -:   11:class Graph {
+        -:   12:private:
+        -:   13:    unsigned int numVertices;
+        -:   14:    vector<vector<int>> adjMatrix;
+        -:   15:
+        -:   16:    unsigned int minDistance(unsigned int dist[], bool sptSet[]) const;
+        -:   17:    void printSolution(unsigned int dist[]) const;
+        -:   18:
+        -:   19:public:
+        -:   20:    Graph();
+        -:   21:
+        4:   22:    unsigned int getNumVertices() const { return numVertices; }
+        -:   23:
+        -:   24:    void dijkstra(unsigned int startingVertex);
+        -:   25:
+        -:   26:};

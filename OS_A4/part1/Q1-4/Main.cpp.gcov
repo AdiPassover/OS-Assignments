@@ -1,0 +1,61 @@
+        -:    0:Source:Main.cpp
+        -:    0:Graph:Main.gcno
+        -:    0:Data:Main.gcda
+        -:    0:Runs:7
+        -:    1:#include "Graph.hpp"
+        -:    2:#include <iostream>
+        -:    3:#include <getopt.h>
+        -:    4:
+        -:    5:using std::cout;
+        -:    6:using std::endl;
+        -:    7:
+        7:    8:int main(int argc, char* argv[]) {
+        -:    9:
+        -:   10:    unsigned int numVertices;
+        -:   11:    unsigned int numEdges;
+        -:   12:    int seed;
+        -:   13:    int option;
+        -:   14:
+        7:   15:    if (argc != 7) {
+        1:   16:        fprintf(stderr, "Usage: %s [-n num of vertices] [-m num of edges] [-s seed]\n", argv[0]);
+        1:   17:        exit(1);
+        -:   18:    }
+        -:   19:
+       23:   20:    while ((option = getopt(argc, argv, "n:m:s:")) != -1) {
+       18:   21:        switch (option) {
+        6:   22:            case 'n':
+        6:   23:                numVertices = atoi(optarg);
+        6:   24:                break;
+        6:   25:            case 'm':
+        6:   26:                numEdges = atoi(optarg);
+        6:   27:                break;
+        5:   28:            case 's':
+        5:   29:                seed = atoi(optarg);
+        5:   30:                break;
+        1:   31:            default:
+        1:   32:                fprintf(stderr, "Usage: %s [-n num of vertices] [-m num of edges] [-s seed]\n", argv[0]);
+        1:   33:                exit(1);
+        -:   34:        }
+        -:   35:    }
+        -:   36:
+       10:   37:    Graph graph;
+        -:   38:    try {
+        5:   39:        graph = Graph(numVertices, numEdges, seed);
+        1:   40:    } catch (const std::invalid_argument& e) {
+        1:   41:        cout << e.what() << endl;
+        1:   42:        return 0;
+        1:   43:    }
+        -:   44:
+        8:   45:    std::vector<Edge> circle = graph.getEulerianCircle();
+        4:   46:    if (circle.empty()) {
+        3:   47:        cout << "No Eulerian circle exists" << endl;
+        3:   48:        return 0;
+        -:   49:    }
+        1:   50:    else cout << "Eulerian path found" << endl;
+        1:   51:    cout << circle[0].u;
+     4852:   52:    for (auto& edge : circle)
+     4851:   53:        cout << "->" << edge.v;
+        1:   54:    cout << endl;
+        -:   55:
+        1:   56:    return 0;
+        -:   57:}

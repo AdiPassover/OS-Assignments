@@ -1,0 +1,87 @@
+        -:    0:Source:findPhone.c
+        -:    0:Graph:./findPhone.gcno
+        -:    0:Data:./findPhone.gcda
+        -:    0:Runs:26
+        -:    1:#include <unistd.h>
+        -:    2:#include <stdio.h>
+        -:    3:#include <stdlib.h>
+        -:    4:#include <string.h>
+        -:    5:#include <sys/wait.h>
+        -:    6:
+        -:    7:#define PB_PATH "PhoneBook.txt"
+        -:    8:#define MAX_NAME_SIZE 100
+        -:    9:
+        5:   10:void pipeline(char*** commands, size_t n) {
+        -:   11:    int pipe_fd[2];  // Pipe file descriptors
+        5:   12:    int curr_fd = 0; // Current input file descriptor, initially stdin
+        -:   13:
+       25:   14:    for (size_t i = 0; i < n; i++) {
+       20:   15:        if (pipe(pipe_fd) == -1) {
+    #####:   16:            perror("Error opening pipe.");
+    #####:   17:            exit(2);
+        -:   18:        }
+        -:   19:
+       20:   20:        pid_t fork_id = fork();
+       40:   21:        if (fork_id == -1) {
+    #####:   22:            perror("Error forking.");
+    #####:   23:            exit(3);
+        -:   24:        }
+        -:   25:
+       40:   26:        if (fork_id == 0) { // Child process
+       20:   27:            if (curr_fd != 0) {  // Not the first command, redirect input
+       15:   28:                dup2(curr_fd, STDIN_FILENO); 
+       15:   29:                close(curr_fd);
+        -:   30:            }
+       20:   31:            if (i != n - 1) { // Not the last command, redirect output
+       15:   32:                dup2(pipe_fd[1], STDOUT_FILENO);
+        -:   33:            }
+        -:   34:
+        -:   35:            // Close pipe ends after redirecting
+       20:   36:            close(pipe_fd[0]);
+       20:   37:            close(pipe_fd[1]);
+        -:   38:
+       20:   39:            execvp(commands[i][0], commands[i]); // Execute the command
+       20:   40:            perror("Command failed");
+    #####:   41:            exit(4);
+        -:   42:        } else { // Parent process
+       20:   43:            wait(NULL); // Wait for child to finish
+       20:   44:            close(pipe_fd[1]); // Close the write end of the pipe in the parent
+       20:   45:            if (curr_fd != 0) {
+       15:   46:                close(curr_fd); // Close the previous read end
+        -:   47:            }
+       20:   48:            curr_fd = pipe_fd[0]; // Save the read end for the next command
+        -:   49:        }
+        -:   50:    }
+        -:   51:    // Close the last read end in the parent
+        5:   52:    if (curr_fd != 0) {
+        5:   53:        close(curr_fd);
+        -:   54:    }
+        5:   55:}
+        -:   56:
+        6:   57:int main(int argc, char* argv[]) {
+        6:   58:    if (argc < 2) {
+        1:   59:        fprintf(stderr, "Please write the name you want the phone of.\n");
+        1:   60:        return 1;
+        -:   61:    }
+        -:   62:
+        -:   63:    char name[MAX_NAME_SIZE];
+        5:   64:    name[0] = '\0'; // Initialize the string
+       11:   65:    for (int i = 1; i < argc; i++) {
+        6:   66:        strcat(name, argv[i]);
+        6:   67:        if (i < argc - 1) {
+        1:   68:            strcat(name, " "); // Add space between words
+        -:   69:        }
+        -:   70:    }
+        -:   71:
+        -:   72:    // The commands we want to run in the pipeline:
+        -:   73:    // grep [name] PhoneBook.txt | sed 's/ /#/g' | sed 's/,/ /' | awk '{print $2}'
+        5:   74:    char* c1[] = {"grep", name, PB_PATH, NULL};
+        5:   75:    char* c2[] = {"sed", "s/ /#/g", NULL};
+        5:   76:    char* c3[] = {"sed", "s/,/ /", NULL};
+        5:   77:    char* c4[] = {"awk", "{print $2}", NULL};
+        5:   78:    char** commands[] = { c1, c2, c3, c4};
+        -:   79:    
+        5:   80:    pipeline(commands, 4);
+        -:   81:
+        5:   82:    return 0;
+        -:   83:}

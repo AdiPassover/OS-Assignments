@@ -1,0 +1,36 @@
+==104414== Memcheck, a memory error detector
+==104414== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==104414== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==104414== Command: ./main hello world
+==104414== Parent PID: 104413
+==104414== 
+==104414== Conditional jump or move depends on uninitialised value(s)
+==104414==    at 0x109234: main (hello.c:15)
+==104414==  Uninitialised value was created by a stack allocation
+==104414==    at 0x1091C9: main (hello.c:8)
+==104414== 
+==104414== 
+==104414== HEAP SUMMARY:
+==104414==     in use at exit: 42 bytes in 3 blocks
+==104414==   total heap usage: 4 allocs, 1 frees, 1,066 bytes allocated
+==104414== 
+==104414== 42 bytes in 3 blocks are definitely lost in loss record 1 of 1
+==104414==    at 0x4848899: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==104414==    by 0x10922A: main (hello.c:13)
+==104414== 
+==104414== LEAK SUMMARY:
+==104414==    definitely lost: 42 bytes in 3 blocks
+==104414==    indirectly lost: 0 bytes in 0 blocks
+==104414==      possibly lost: 0 bytes in 0 blocks
+==104414==    still reachable: 0 bytes in 0 blocks
+==104414==         suppressed: 0 bytes in 0 blocks
+==104414== 
+==104414== ERROR SUMMARY: 2 errors from 2 contexts (suppressed: 0 from 0)
+==104414== 
+==104414== 1 errors in context 1 of 2:
+==104414== Conditional jump or move depends on uninitialised value(s)
+==104414==    at 0x109234: main (hello.c:15)
+==104414==  Uninitialised value was created by a stack allocation
+==104414==    at 0x1091C9: main (hello.c:8)
+==104414== 
+==104414== ERROR SUMMARY: 2 errors from 2 contexts (suppressed: 0 from 0)

@@ -1,0 +1,89 @@
+        -:    0:Source:Molecule.cpp
+        -:    0:Graph:./AtomStorageServer.gcno
+        -:    0:Data:./AtomStorageServer.gcda
+        -:    0:Runs:6
+        -:    1:#include <cstdio>
+        -:    2:#include <cstring>
+        -:    3:#include <stdexcept>
+        -:    4:
+        -:    5:class Molecule {
+        -:    6:private:
+        -:    7:    unsigned long long carbon;
+        -:    8:    unsigned long long oxygen;
+        -:    9:    unsigned long long hydrogen;
+        -:   10:
+        -:   11:public:
+       15:   12:    Molecule() : carbon(0), oxygen(0), hydrogen(0) {}
+      102:   13:    Molecule(unsigned int c, unsigned int o, unsigned int h) : carbon(c), oxygen(o), hydrogen(h) {}
+        -:   14:
+        -:   15:    unsigned long long getCarbon() const { return carbon; }
+        -:   16:    unsigned long long getOxygen() const { return oxygen; }
+        -:   17:    unsigned long long getHydrogen() const { return hydrogen; }
+        -:   18:
+        8:   19:    void addCarbon(unsigned long long c) { carbon += c; }
+        4:   20:    void addOxygen(unsigned long long o) { oxygen += o; }
+        4:   21:    void addHydrogen(unsigned long long h) { hydrogen += h; }
+        -:   22:
+       36:   23:    Molecule operator+(const Molecule& other) const {
+        -:   24:        return Molecule(
+       36:   25:                this->carbon + other.carbon,
+       36:   26:                this->oxygen + other.oxygen,
+       36:   27:                this->hydrogen + other.hydrogen
+       36:   28:        );
+        -:   29:    }
+        -:   30:
+        -:   31:    Molecule operator-(const Molecule& other) const {
+        -:   32:        return Molecule(
+        -:   33:                this->carbon > other.carbon ? this->carbon - other.carbon : 0,
+        -:   34:                this->oxygen > other.oxygen ? this->oxygen - other.oxygen : 0,
+        -:   35:                this->hydrogen > other.hydrogen ? this->hydrogen - other.hydrogen : 0
+        -:   36:        );
+        -:   37:    }
+        -:   38:
+        -:   39:    Molecule& operator+=(const Molecule& other) {
+        -:   40:        this->carbon += other.carbon;
+        -:   41:        this->oxygen += other.oxygen;
+        -:   42:        this->hydrogen += other.hydrogen;
+        -:   43:        return *this;
+        -:   44:    }
+        -:   45:
+        5:   46:    Molecule& operator-=(const Molecule& other) {
+       5*:   47:        this->carbon = this->carbon > other.carbon ? this->carbon - other.carbon : 0;
+       5*:   48:        this->oxygen = this->oxygen > other.oxygen ? this->oxygen - other.oxygen : 0;
+       5*:   49:        this->hydrogen = this->hydrogen > other.hydrogen ? this->hydrogen - other.hydrogen : 0;
+        5:   50:        return *this;
+        -:   51:    }
+        -:   52:
+        6:   53:    bool operator<=(const Molecule& other) const {
+        6:   54:        return this->carbon <= other.carbon && this->oxygen <= other.oxygen && this->hydrogen <= other.hydrogen;
+        -:   55:    }
+        -:   56:    bool operator>=(const Molecule& other) const {
+        -:   57:        return other <= *this;
+        -:   58:    }
+        -:   59:
+        6:   60:    Molecule operator*(unsigned long long n) const {
+        6:   61:        return Molecule(this->carbon * n, this->oxygen * n, this->hydrogen * n);
+        -:   62:    }
+        -:   63:
+       18:   64:    unsigned long long operator/(const Molecule& other) const {
+       18:   65:        unsigned long long c = other.carbon != 0 ? this->carbon / other.carbon : -1;
+      18*:   66:        unsigned long long o = other.oxygen != 0 ? this->oxygen / other.oxygen : -1;
+       18:   67:        unsigned long long h = other.hydrogen != 0 ? this->hydrogen / other.hydrogen : -1;
+       18:   68:        return std::min(std::min(c, o), h);
+        -:   69:    }
+        -:   70:
+       18:   71:    char* toString() const {
+       18:   72:        char* str = new char[100];
+       18:   73:        sprintf(str, "Carbon: %llu\nOxygen: %llu\nHydrogen: %llu\n", carbon, oxygen, hydrogen);
+       18:   74:        return str;
+        -:   75:    }
+        -:   76:
+        -:   77:    friend Molecule operator"" _C(unsigned long long c);
+        -:   78:    friend Molecule operator"" _O(unsigned long long o);
+        -:   79:    friend Molecule operator"" _H(unsigned long long h);
+        -:   80:
+        -:   81:};
+        -:   82:
+       18:   83:Molecule operator"" _C(unsigned long long c) { return Molecule(c, 0, 0); }
+       24:   84:Molecule operator"" _O(unsigned long long o) { return Molecule(0, o, 0); }
+       18:   85:Molecule operator"" _H(unsigned long long h) { return Molecule(0, 0, h); }

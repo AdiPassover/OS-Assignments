@@ -1,0 +1,142 @@
+        -:    0:Source:AtomClient.cpp
+        -:    0:Graph:./AtomClient.gcno
+        -:    0:Data:./AtomClient.gcda
+        -:    0:Runs:3
+        -:    1:#include <stdio.h>
+        -:    2:#include <stdlib.h>
+        -:    3:#include <string.h>
+        -:    4:#include <unistd.h>
+        -:    5:#include <sys/socket.h>
+        -:    6:#include <netdb.h>
+        -:    7:
+        -:    8:#define PORT "55555"
+        -:    9:#define BUFFER_SIZE 100
+        -:   10:
+        1:   11:void perror_and_exit(const char* msg) {
+        1:   12:    perror(msg);
+        1:   13:    exit(1);
+        -:   14:}
+        -:   15:
+        3:   16:int create_tcp_socket(const char* server_ip, const char* port, struct addrinfo** res) {
+        -:   17:    struct addrinfo hints;
+        -:   18:    int sockfd;
+        -:   19:
+        -:   20:    // Prepare connection
+        3:   21:    memset(&hints, 0, sizeof hints);
+        3:   22:    hints.ai_family = AF_UNSPEC;
+        3:   23:    hints.ai_socktype = SOCK_STREAM;
+        -:   24:
+        3:   25:    if (getaddrinfo(server_ip, port, &hints, res) != 0) {
+    #####:   26:        perror("getaddrinfo failed");
+    #####:   27:        exit(1);
+        -:   28:    }
+        -:   29:
+        3:   30:    sockfd = socket((*res)->ai_family, (*res)->ai_socktype, (*res)->ai_protocol);
+        3:   31:    if (sockfd == -1) {
+    #####:   32:        perror_and_exit("Creating TCP socket failed");
+        -:   33:    }
+        -:   34:
+        3:   35:    if (connect(sockfd, (*res)->ai_addr, (*res)->ai_addrlen) == -1) {
+        1:   36:        perror_and_exit("TCP connection failed");
+        -:   37:    }
+        -:   38:
+        2:   39:    return sockfd;
+        -:   40:}
+        -:   41:
+        2:   42:int create_udp_socket(const char* server_ip, const char* port, struct addrinfo** res) {
+        -:   43:    struct addrinfo hints;
+        -:   44:    int sockfd;
+        -:   45:
+        -:   46:    // Prepare connection
+        2:   47:    memset(&hints, 0, sizeof hints);
+        2:   48:    hints.ai_family = AF_UNSPEC;
+        2:   49:    hints.ai_socktype = SOCK_DGRAM;
+        -:   50:
+        2:   51:    if (getaddrinfo(server_ip, port, &hints, res) != 0) {
+    #####:   52:        perror_and_exit("getaddrinfo failed");
+        -:   53:    }
+        -:   54:
+        2:   55:    sockfd = socket((*res)->ai_family, (*res)->ai_socktype, (*res)->ai_protocol);
+        2:   56:    if (sockfd == -1) {
+    #####:   57:        perror_and_exit("Creating UDP socket failed");
+        -:   58:    }
+        -:   59:
+        2:   60:    return sockfd;
+        -:   61:}
+        -:   62:
+        9:   63:void send_tcp_message(int sockfd, struct addrinfo* res, const char* message) {
+        -:   64:    // Send the message
+        9:   65:    ssize_t bytes_sent = send(sockfd, message, strlen(message), 0);
+        9:   66:    if (bytes_sent == -1) {
+    #####:   67:        perror_and_exit("Sending TCP message failed");
+        -:   68:    }
+        -:   69:
+        -:   70:    // Receive server response
+        -:   71:    char buffer[BUFFER_SIZE];
+        9:   72:    ssize_t bytes_received = recv(sockfd, buffer, sizeof buffer - 1, 0);
+        9:   73:    if (bytes_received == -1) {
+    #####:   74:        perror_and_exit("Receiving TCP response failed");
+        -:   75:    }
+        -:   76:
+        9:   77:    buffer[bytes_received] = '\0';
+        9:   78:    printf("Received from server (TCP): %s\n", buffer);
+        9:   79:}
+        -:   80:
+        9:   81:void send_udp_message(int sockfd, struct addrinfo* res, char* message) {
+        9:   82:    const char* cd_message = "DELIVER CARBON DIOXIDE";
+        9:   83:    if (strncmp(message,cd_message, strlen(cd_message)) == 0)
+        1:   84:        message[14] = '_';
+        -:   85:
+        -:   86:    // Send the message
+        9:   87:    ssize_t bytes_sent = sendto(sockfd, message, strlen(message), 0, res->ai_addr, res->ai_addrlen);
+        9:   88:    if (bytes_sent == -1) {
+    #####:   89:        perror_and_exit("Sending UDP message failed");
+        -:   90:    }
+        -:   91:
+        -:   92:    // Receive server response
+        -:   93:    char buffer[BUFFER_SIZE];
+        9:   94:    ssize_t bytes_received = recvfrom(sockfd, buffer, sizeof buffer - 1, 0, res->ai_addr, &res->ai_addrlen);
+        9:   95:    if (bytes_received == -1) {
+    #####:   96:        perror_and_exit("Receiving UDP response failed");
+        -:   97:    }
+        -:   98:
+        9:   99:    buffer[bytes_received] = '\0';
+        9:  100:    printf("Received from server (UDP): %s\n", buffer);
+        9:  101:}
+        -:  102:
+        -:  103:
+        3:  104:int main() {
+        -:  105:    char buffer[BUFFER_SIZE];
+        -:  106:    struct addrinfo *tcp_res, *udp_res;
+        3:  107:    int tcp_sockfd = create_tcp_socket("127.0.0.1", PORT, &tcp_res);
+        2:  108:    int udp_sockfd = create_udp_socket("127.0.0.1", PORT, &udp_res);
+        -:  109:
+        2:  110:    printf("Enter commands or HELP for usage. To quit, type EXIT.\n");
+        -:  111:
+       25:  112:    while (fgets(buffer, sizeof buffer, stdin)) {
+       25:  113:        buffer[strcspn(buffer, "\n")] = 0;
+        -:  114:
+       25:  115:        if (strncmp(buffer, "ADD", 3) == 0) {
+        9:  116:            send_tcp_message(tcp_sockfd, tcp_res, buffer);
+       16:  117:        } else if (strncmp(buffer, "DELIVER", 7) == 0) {
+        9:  118:            send_udp_message(udp_sockfd, udp_res, buffer);
+        7:  119:        } else if (strcmp(buffer, "EXIT") == 0) {
+        2:  120:            printf("Shutting down client.\n");
+        2:  121:            break;
+        5:  122:        } else if (strcmp(buffer, "HELP") == 0) {
+        2:  123:            printf("Usage:\n"
+        -:  124:                   "ADD [CARBON|OXYGEN|HYDROGEN] [number]\n"
+        -:  125:                   "DELIVER [WATER|CARBON DIOXIDE|ALCOHOL|GLUCOSE] [number]\n");
+        -:  126:        } else {
+        3:  127:            printf("Unknown command. Use ADD or DELIVER or type EXIT to quit.\n");
+        -:  128:        }
+        -:  129:    }
+        -:  130:
+        -:  131:    // Clean up
+        2:  132:    close(tcp_sockfd);
+        2:  133:    close(udp_sockfd);
+        2:  134:    freeaddrinfo(tcp_res);
+        2:  135:    freeaddrinfo(udp_res);
+        -:  136:
+        2:  137:    return 0;
+        -:  138:}

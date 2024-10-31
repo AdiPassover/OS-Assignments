@@ -1,0 +1,15 @@
+newgraph 5 4 0 1 1 1 2 2 2 3 3 3 4 4
+mst prim
+mst kruskal
+printgraph
+addedge 1 3 1
+printgraph
+mst prim
+mst kruskal
+newgraph 3 1 0 2 -8
+mst prim
+mst kruskal
+addedge 1 2 1
+mst prim
+mst kruskal
+printgraph

@@ -1,0 +1,20 @@
+        -:    0:Source:Main.cpp
+        -:    0:Graph:Main.gcno
+        -:    0:Data:Main.gcda
+        -:    0:Runs:9
+        -:    1:#include "Graph.hpp"
+        -:    2:
+        9:    3:int main(int argc, char* argv[]) {
+        9:    4:    Graph g;
+        -:    5:
+        -:    6:    unsigned int src;
+        4:    7:    std::cout << "Please enter the source vertex" << std::endl;
+        4:    8:    if (!(std::cin >> src) || src >= g.getNumVertices()) {
+        2:    9:        std::cout << "Illegal vertex" << std::endl;
+        2:   10:        exit(1);
+        -:   11:    }
+        -:   12:
+        2:   13:    g.dijkstra(src);
+        -:   14:
+        2:   15:    return 0;
+        2:   16:}

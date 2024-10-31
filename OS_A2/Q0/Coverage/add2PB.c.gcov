@@ -1,0 +1,38 @@
+        -:    0:Source:add2PB.c
+        -:    0:Graph:./add2PB.gcno
+        -:    0:Data:./add2PB.gcda
+        -:    0:Runs:4
+        -:    1:#include <unistd.h>
+        -:    2:#include <stdio.h>
+        -:    3:#include <fcntl.h>
+        -:    4:#include <stdlib.h>
+        -:    5:
+        -:    6:#define PB_PATH "PhoneBook.txt"
+        -:    7:
+        4:    8:int main(int argc, char* argv[]) {
+        4:    9:    if (argc < 3) {
+        1:   10:        fprintf(stderr, "Invalid amount of arguments. You have to enter the name and phone separated by spaces.\n");
+        1:   11:        return 1;
+        -:   12:    }
+        -:   13:
+        3:   14:    int fd = open(PB_PATH, O_WRONLY | O_APPEND | O_CREAT, 0644); // 0644 = rw-r--r--
+        3:   15:    if (fd == -1) {
+        1:   16:        perror("Error opening file");
+        1:   17:        return 2;
+        -:   18:    }
+        -:   19:
+        8:   20:    for (int i = 1; i < argc; i++) {
+        6:   21:        size_t size = 0;
+       47:   22:        while (argv[i][size] != '\0') { size++; }
+        6:   23:        write(fd, argv[i], size);
+        6:   24:        if (i < argc-2)
+        2:   25:            write(fd, " ", 1);
+        4:   26:        else if (i == argc-2)
+        2:   27:            write(fd, ",", 1);
+        -:   28:        else
+        2:   29:            write(fd, "\n", 1);
+        -:   30:    }
+        -:   31:
+        2:   32:    close(fd);
+        2:   33:    return 0;
+        -:   34:}

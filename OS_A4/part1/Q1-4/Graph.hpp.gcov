@@ -1,0 +1,35 @@
+        -:    0:Source:Graph.hpp
+        -:    0:Graph:Graph.gcno
+        -:    0:Data:Graph.gcda
+        -:    0:Runs:7
+        -:    1:#ifndef OS_A4_GRAPH_HPP
+        -:    2:#define OS_A4_GRAPH_HPP
+        -:    3:#include <vector>
+        -:    4:
+        -:    5:
+        -:    6:typedef struct {
+        -:    7:    unsigned int u;
+        -:    8:    unsigned int v;
+        -:    9:} Edge;
+        -:   10:
+        -:   11:class Graph {
+        -:   12:private:
+        -:   13:    unsigned int numVertices;
+        -:   14:    std::vector<std::vector<bool>> adjMatrix;
+        -:   15:
+        -:   16:public:
+        -:   17:    inline Graph() : numVertices(0) {}
+        5:   18:    inline explicit Graph(unsigned int size) : numVertices(size), adjMatrix(size, std::vector<bool>(size)) {}
+        -:   19:    Graph(unsigned int nVertices, unsigned int nEdges, int seed = 42); // Generates random graph
+        -:   20:
+        -:   21:    void addEdge(unsigned int u, unsigned int v);
+     9251:   22:    inline void addEdge(const Edge& e) { addEdge(e.u, e.v); }
+        -:   23:
+        -:   24:    /**
+        -:   25:     * @return an Eulerian circle in the graph or empty vector if none exist
+        -:   26:     */
+        -:   27:    std::vector<Edge> getEulerianCircle() const;
+        -:   28:
+        -:   29:};
+        -:   30:
+        -:   31:#endif //OS_A4_GRAPH_HPP

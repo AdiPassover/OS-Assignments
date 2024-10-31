@@ -1,0 +1,90 @@
+File 'Main.cpp'
+Lines executed:100.00% of 9
+Creating 'Main.cpp.gcov'
+
+File '/usr/include/c++/11/iostream'
+No executable lines
+Removing 'iostream.gcov'
+
+File '/usr/include/c++/11/ext/new_allocator.h'
+Lines executed:100.00% of 3
+Creating 'new_allocator.h.gcov'
+
+File '/usr/include/c++/11/bits/stl_construct.h'
+Lines executed:100.00% of 11
+Creating 'stl_construct.h.gcov'
+
+File '/usr/include/c++/11/bits/alloc_traits.h'
+Lines executed:100.00% of 5
+Creating 'alloc_traits.h.gcov'
+
+File '/usr/include/c++/11/bits/stl_vector.h'
+Lines executed:100.00% of 14
+Creating 'stl_vector.h.gcov'
+
+File '/usr/include/c++/11/bits/allocator.h'
+Lines executed:100.00% of 1
+Creating 'allocator.h.gcov'
+
+File '/usr/include/c++/11/bits/move.h'
+Lines executed:100.00% of 2
+Creating 'move.h.gcov'
+
+File 'Graph.hpp'
+Lines executed:100.00% of 1
+Creating 'Graph.hpp.gcov'
+
+Lines executed:100.00% of 46
+File 'Graph.cpp'
+Lines executed:100.00% of 49
+Creating 'Graph.cpp.gcov'
+
+File '/usr/include/c++/11/iostream'
+No executable lines
+Removing 'iostream.gcov'
+
+File '/usr/include/c++/11/ext/new_allocator.h'
+Lines executed:42.11% of 19
+Creating 'new_allocator.h.gcov'
+
+File '/usr/include/c++/11/bits/stl_vector.h'
+Lines executed:51.52% of 66
+Creating 'stl_vector.h.gcov'
+
+File '/usr/include/c++/11/bits/allocator.h'
+Lines executed:25.00% of 4
+Creating 'allocator.h.gcov'
+
+File '/usr/include/c++/11/bits/move.h'
+Lines executed:33.33% of 6
+Creating 'move.h.gcov'
+
+File '/usr/include/c++/11/bits/stl_algobase.h'
+Lines executed:88.46% of 26
+Creating 'stl_algobase.h.gcov'
+
+File '/usr/include/c++/11/bits/alloc_traits.h'
+Lines executed:26.67% of 15
+Creating 'alloc_traits.h.gcov'
+
+File '/usr/include/c++/11/bits/stl_iterator_base_types.h'
+Lines executed:100.00% of 2
+Creating 'stl_iterator_base_types.h.gcov'
+
+File '/usr/include/c++/11/bits/stl_uninitialized.h'
+Lines executed:82.35% of 34
+Creating 'stl_uninitialized.h.gcov'
+
+File '/usr/include/c++/11/bits/stl_construct.h'
+Lines executed:21.43% of 14
+Creating 'stl_construct.h.gcov'
+
+File '/usr/include/c++/11/bits/vector.tcc'
+Lines executed:74.07% of 27
+Creating 'vector.tcc.gcov'
+
+File '/usr/include/c++/11/new'
+Lines executed:100.00% of 2
+Creating 'new.gcov'
+
+Lines executed:66.67% of 264

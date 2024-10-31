@@ -1,0 +1,123 @@
+        -:    0:Source:Graph.cpp
+        -:    0:Graph:Graph.gcno
+        -:    0:Data:Graph.gcda
+        -:    0:Runs:9
+        -:    1:#include "Graph.hpp"
+        -:    2:
+        -:    3:using std::cin;
+        -:    4:using std::cout;
+        -:    5:using std::endl;
+        -:    6:
+        9:    7:Graph::Graph() {
+        -:    8:
+        9:    9:    cout << "Please enter the number of vertices" << endl;
+        -:   10:    int size;
+        9:   11:    if (!(cin >> size) || size < 0) {
+        1:   12:        cout << "Invalid size" << endl;
+        1:   13:        exit(1);
+        -:   14:    }
+        8:   15:    numVertices = size;
+        -:   16:
+        8:   17:    adjMatrix.resize(numVertices);
+       30:   18:    for (unsigned int i = 0; i < numVertices; i++)
+       22:   19:        adjMatrix[i].resize(numVertices);
+        -:   20:
+       22:   21:    for (unsigned int i = 0; i < numVertices; i++) {
+       64:   22:        for (unsigned int j = 0; j < numVertices; j++) {
+       49:   23:            cout << "Please enter the number of weight of edge " << i << "->" << j << endl;
+       49:   24:            if (!(cin >> adjMatrix[i][j])) {
+        2:   25:                cout << "Invalid weight" << endl;
+        2:   26:                exit(1);
+        -:   27:            }
+       47:   28:            if (adjMatrix[i][j] < 0) {
+        1:   29:                cout << "Dijkstra requires non-negative weights" << endl;
+        1:   30:                exit(1);
+        -:   31:            }
+        -:   32:        }
+       15:   33:        if (adjMatrix[i][i] != 0) {
+        1:   34:            cout << "A simple graph doesn't have edges from a vertex to itself" << endl;
+        1:   35:            exit(1);
+        -:   36:        }
+        -:   37:    }
+        -:   38:
+        4:   39:}
+        -:   40:
+        -:   41:// C++ program for Dijkstra's single source shortest path
+        -:   42:// algorithm. The program is for adjacency matrix
+        -:   43:// representation of the graph
+        -:   44:
+        -:   45:// A utility function to find the vertex with minimum
+        -:   46:// distance value, from the set of vertices not yet included
+        -:   47:// in shortest path tree
+        3:   48:unsigned int Graph::minDistance(unsigned int dist[], bool sptSet[]) const
+        -:   49:{
+        -:   50:
+        -:   51:    // Initialize min value
+        3:   52:    unsigned int min = INT_MAX, min_index;
+        -:   53:
+       11:   54:    for (unsigned int v = 0; v < numVertices; v++)
+        8:   55:        if (!sptSet[v] && dist[v] <= min)
+        4:   56:            min = dist[v], min_index = v;
+        -:   57:
+        3:   58:    return min_index;
+        -:   59:}
+        -:   60:
+        -:   61:// A utility function to print the constructed distance
+        -:   62:// array
+        2:   63:void Graph::printSolution(unsigned int dist[]) const
+        -:   64:{
+        2:   65:    cout << "Vertex \t Distance from Source" << endl;
+        7:   66:    for (unsigned int i = 0; i < numVertices; i++)
+        5:   67:        cout << i << " \t\t\t\t" << dist[i] << endl;
+        2:   68:}
+        -:   69:
+        -:   70:// Function that implements Dijkstra's single source
+        -:   71:// shortest path algorithm for a graph represented using
+        -:   72:// adjacency matrix representation
+        2:   73:void Graph::dijkstra(unsigned int src)
+        -:   74:{
+        2:   75:    unsigned int dist[numVertices]; // The output array.  dist[i] will hold the
+        -:   76:    // shortest
+        -:   77:    // distance from src to i
+        -:   78:
+        2:   79:    bool sptSet[numVertices]; // sptSet[i] will be true if vertex i is
+        -:   80:    // included in shortest
+        -:   81:    // path tree or shortest distance from src to i is
+        -:   82:    // finalized
+        -:   83:
+        -:   84:    // Initialize all distances as INFINITE and stpSet[] as
+        -:   85:    // false
+        7:   86:    for (unsigned int i = 0; i < numVertices; i++)
+        5:   87:        dist[i] = INT_MAX, sptSet[i] = false;
+        -:   88:
+        -:   89:    // Distance of source vertex from itself is always 0
+        2:   90:    dist[src] = 0;
+        -:   91:
+        -:   92:    // Find shortest path for all vertices
+        5:   93:    for (unsigned int count = 0; count < numVertices - 1; count++) {
+        -:   94:        // Pick the minimum distance vertex from the set of
+        -:   95:        // vertices not yet processed. u is always equal to
+        -:   96:        // src in the first iteration.
+        3:   97:        unsigned int u = minDistance(dist, sptSet);
+        -:   98:
+        -:   99:        // Mark the picked vertex as processed
+        3:  100:        sptSet[u] = true;
+        -:  101:
+        -:  102:        // Update dist value of the adjacent vertices of the
+        -:  103:        // picked vertex.
+       11:  104:        for (unsigned int v = 0; v < numVertices; v++)
+        -:  105:
+        -:  106:            // Update dist[v] only if is not in sptSet,
+        -:  107:            // there is an edge from u to v, and total
+        -:  108:            // weight of path from src to  v through u is
+        -:  109:            // smaller than current value of dist[v]
+        4:  110:            if (!sptSet[v] && adjMatrix[u][v]
+        4:  111:                && dist[u] != INT_MAX
+       12:  112:                && dist[u] + adjMatrix[u][v] < dist[v])
+        3:  113:                dist[v] = dist[u] + adjMatrix[u][v];
+        -:  114:    }
+        -:  115:
+        -:  116:    // print the constructed distance array
+        2:  117:    printSolution(dist);
+        -:  118:
+        4:  119:}

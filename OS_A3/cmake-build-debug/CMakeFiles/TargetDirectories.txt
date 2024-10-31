@@ -1,0 +1,3 @@
+/home/adipassover/os/OS_A3/cmake-build-debug/CMakeFiles/OS_A3.dir
+/home/adipassover/os/OS_A3/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/adipassover/os/OS_A3/cmake-build-debug/CMakeFiles/rebuild_cache.dir
